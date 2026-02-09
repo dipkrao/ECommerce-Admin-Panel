@@ -153,7 +153,7 @@ const ProductForm = () => {
               onChange={handleChange}
               required
               disabled={productLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="form-input disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Enter product name"
             />
           </div>
@@ -164,7 +164,7 @@ const ProductForm = () => {
               Price *
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-2 text-gray-500">$</span>
+              <span className="absolute left-3 top-2 text-gray-500">₹</span>
               <input
                 type="number"
                 name="price"
@@ -174,7 +174,7 @@ const ProductForm = () => {
                 step="0.01"
                 min="0"
                 disabled={productLoading}
-                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="form-input pl-8 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="0.00"
               />
             </div>
@@ -191,7 +191,7 @@ const ProductForm = () => {
               onChange={handleChange}
               required
               disabled={categoriesLoading || productLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="form-select disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               <option value="">
                 {categoriesLoading
@@ -224,7 +224,7 @@ const ProductForm = () => {
               required
               min="0"
               disabled={productLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="form-input disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Enter stock quantity"
             />
           </div>
@@ -244,7 +244,7 @@ const ProductForm = () => {
                 }))
               }
               disabled={productLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="form-select disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               <option value={true}>Active</option>
               <option value={false}>Inactive</option>
@@ -264,7 +264,7 @@ const ProductForm = () => {
                 setFormData((prev) => ({ ...prev, images: [e.target.value] }))
               }
               disabled={productLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="form-input disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="https://example.com/image.jpg"
             />
           </div>
@@ -282,7 +282,7 @@ const ProductForm = () => {
             required
             rows={4}
             disabled={productLoading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="form-textarea disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="Enter product description"
           />
         </div>

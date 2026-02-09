@@ -172,7 +172,7 @@ const Categories = () => {
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="form-input"
                   placeholder="Enter category name"
                 />
               </div>
@@ -188,7 +188,7 @@ const Categories = () => {
                       isActive: e.target.value === "true",
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="form-select"
                 >
                   <option value={true}>Active</option>
                   <option value={false}>Inactive</option>
@@ -208,7 +208,7 @@ const Categories = () => {
                   }))
                 }
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="form-textarea"
                 placeholder="Enter category description"
               />
             </div>

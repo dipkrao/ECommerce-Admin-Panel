@@ -82,10 +82,11 @@ const Products = () => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
-    }).format(price);
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(price ?? 0);
   };
 
   if (loading && products.length === 0) {
@@ -130,7 +131,7 @@ const Products = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                className="form-input pl-10"
                 placeholder="Search products..."
               />
             </form>
@@ -141,7 +142,7 @@ const Products = () => {
             <select
               value={selectedStatus}
               onChange={handleStatusChange}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              className="form-select"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>

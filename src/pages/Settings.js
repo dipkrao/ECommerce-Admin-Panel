@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { settingsAPI } from "../utils/api";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
@@ -11,8 +12,8 @@ const Settings = () => {
     contactEmail: "support@mystore.com",
     contactPhone: "+1 (555) 123-4567",
     address: "123 Commerce St, Business City, BC 12345",
-    timezone: "America/New_York",
-    currency: "USD",
+    timezone: "Asia/Kolkata",
+    currency: "INR",
     language: "en",
   });
 
@@ -44,16 +45,54 @@ const Settings = () => {
     showNotifications: true,
   });
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await settingsAPI.get();
+        const s = res.data || {};
+        setGeneralSettings((prev) => ({
+          ...prev,
+          storeName: s.storeName ?? prev.storeName,
+          storeDescription: s.storeDescription ?? prev.storeDescription,
+          contactEmail: s.contactEmail ?? prev.contactEmail,
+          contactPhone: s.contactPhone ?? prev.contactPhone,
+          address: s.address ?? prev.address,
+          currency: s.currency ?? prev.currency,
+          timezone: s.timezone ?? prev.timezone,
+          language: s.language ?? prev.language,
+        }));
+      } catch (error) {
+        // Don't block the page; allow editing with defaults
+        console.error("Failed to load settings:", error);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   const handleGeneralSave = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await settingsAPI.update(generalSettings);
       toast.success("General settings saved successfully!");
     } catch (error) {
-      toast.error("Failed to save general settings");
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to save general settings";
+
+      if (
+        error.response?.status === 404 ||
+        message.toLowerCase().includes("route not found")
+      ) {
+        toast.error(
+          "Settings API route (/api/settings) is not available on the server."
+        );
+      } else {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -241,10 +280,7 @@ const Settings = () => {
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD (C$)</option>
+                    <option value="INR">INR (₹)</option>
                   </select>
                 </div>
                 <div>
@@ -253,23 +289,14 @@ const Settings = () => {
                   </label>
                   <select
                     value={generalSettings.timezone}
-                    onChange={(e) =>
-                      setGeneralSettings((prev) => ({
-                        ...prev,
-                        timezone: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700 cursor-not-allowed"
                   >
-                    <option value="America/New_York">Eastern Time (ET)</option>
-                    <option value="America/Chicago">Central Time (CT)</option>
-                    <option value="America/Denver">Mountain Time (MT)</option>
-                    <option value="America/Los_Angeles">
-                      Pacific Time (PT)
-                    </option>
-                    <option value="Europe/London">London (GMT)</option>
-                    <option value="Europe/Paris">Paris (CET)</option>
+                    <option value="Asia/Kolkata">India Standard Time (IST, Asia/Kolkata)</option>
                   </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Timezone is fixed to India for this admin panel.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

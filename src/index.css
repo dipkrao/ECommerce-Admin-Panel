@@ -50,3 +50,17 @@ code {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+@layer components {
+  .form-input {
+    @apply block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100;
+  }
+
+  .form-textarea {
+    @apply block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100;
+  }
+
+  .form-select {
+    @apply block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100;
+  }
+}

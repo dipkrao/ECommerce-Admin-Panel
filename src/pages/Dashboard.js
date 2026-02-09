@@ -12,6 +12,13 @@ import {
 } from 'lucide-react';
 import { productAPI, orderAPI, userAPI } from '../utils/api';
 
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 2,
+  }).format(amount ?? 0);
+
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -105,7 +112,7 @@ const Dashboard = () => {
             <dl>
               <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
               <dd className="text-lg font-medium text-gray-900">
-                {title === 'Total Revenue' ? `$${value}` : value}
+                {title === 'Total Revenue' ? formatCurrency(value) : value}
               </dd>
               {subtitle && (
                 <dd className="text-sm text-gray-500">{subtitle}</dd>
@@ -271,7 +278,7 @@ const Dashboard = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${product.price}
+                        {formatCurrency(product.price)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {product.stock}

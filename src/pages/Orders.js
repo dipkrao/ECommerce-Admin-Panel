@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 2,
+  }).format(amount ?? 0);
+
 const Orders = () => {
   const [orders, setOrders] = useState([
     {
@@ -108,10 +115,12 @@ const Orders = () => {
   });
 
   const getTotalRevenue = () => {
-    return orders
+    const total = orders
       .filter(order => order.status !== 'cancelled')
       .reduce((sum, order) => sum + order.total, 0)
       .toFixed(2);
+
+    return formatCurrency(parseFloat(total));
   };
 
   const getOrderCount = (status) => {
@@ -150,7 +159,7 @@ const Orders = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-semibold text-gray-900">${getTotalRevenue()}</p>
+              <p className="text-2xl font-semibold text-gray-900">{getTotalRevenue()}</p>
             </div>
           </div>
         </div>
@@ -263,7 +272,9 @@ const Orders = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">${order.total.toFixed(2)}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {formatCurrency(order.total)}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(order.status)}

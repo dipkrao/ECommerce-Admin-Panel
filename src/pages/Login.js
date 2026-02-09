@@ -78,9 +78,8 @@ const Login = () => {
                     },
                   })}
                   className={`
-                    appearance-none relative block w-full pl-10 pr-3 py-2 border rounded-md placeholder-gray-400 
-                    focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm
-                    ${errors.email ? "border-red-300" : "border-gray-300"}
+                    form-input pl-10
+                    ${errors.email ? "border-red-300" : ""}
                   `}
                   placeholder="Enter your email"
                 />
@@ -116,9 +115,8 @@ const Login = () => {
                     },
                   })}
                   className={`
-                    appearance-none relative block w-full pl-10 pr-10 py-2 border rounded-md placeholder-gray-400 
-                    focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm
-                    ${errors.password ? "border-red-300" : "border-gray-300"}
+                    form-input pl-10 pr-10
+                    ${errors.password ? "border-red-300" : ""}
                   `}
                   placeholder="Enter your password"
                 />

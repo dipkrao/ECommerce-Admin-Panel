@@ -1,8 +1,14 @@
 import axios from "axios";
 
+// Normalize base URL so env can be either "http://localhost:5000" OR "http://localhost:5000/api"
+const rawBaseUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const normalizedBaseUrl = rawBaseUrl.endsWith("/api")
+  ? rawBaseUrl
+  : `${rawBaseUrl.replace(/\/$/, "")}/api`;
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
+  baseURL: normalizedBaseUrl,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -121,6 +127,13 @@ export const legalAPI = {
   getByType: (type) => api.get(`/legal/${type}`),
   update: (type, data) => api.put(`/legal/${type}`, data),
   create: (type, data) => api.post("/legal", { type, ...data }),
+};
+
+export const settingsAPI = {
+  get: () => api.get("/settings"),
+  update: (data) => api.put("/settings", data),
+  // If you ever want to preview from admin without auth:
+  getPublic: () => api.get("/settings/public"),
 };
 
 export default api;

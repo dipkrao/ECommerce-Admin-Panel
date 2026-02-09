@@ -260,8 +260,8 @@ const Banners = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Title *
@@ -271,7 +271,8 @@ const Banners = () => {
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Summer sale banner"
+                  className="mt-1 form-input"
                   required
                 />
               </div>
@@ -285,7 +286,8 @@ const Banners = () => {
                   name="buttonText"
                   value={formData.buttonText}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Shop Now"
+                  className="mt-1 form-input"
                 />
               </div>
             </div>
@@ -299,7 +301,8 @@ const Banners = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Highlight the offer, collection, or campaign this banner is promoting."
+                className="mt-1 form-textarea"
                 required
               />
             </div>
@@ -316,12 +319,12 @@ const Banners = () => {
                   value={formData.link}
                   onChange={handleInputChange}
                   placeholder="https://example.com"
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  className="pl-10 form-input"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Start Date
@@ -333,7 +336,7 @@ const Banners = () => {
                     name="startDate"
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    className="pl-10 form-input"
                   />
                 </div>
               </div>
@@ -349,7 +352,7 @@ const Banners = () => {
                     name="endDate"
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    className="pl-10 form-input"
                   />
                 </div>
               </div>
@@ -364,7 +367,7 @@ const Banners = () => {
                   value={formData.order}
                   onChange={handleInputChange}
                   min="0"
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  className="mt-1 form-input"
                 />
               </div>
             </div>
@@ -373,6 +376,9 @@ const Banners = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Banner Image *
               </label>
+              <p className="mt-1 text-xs text-gray-500">
+                Recommended size: <span className="font-semibold">1920 x 600 px</span> (JPG or PNG, under 1 MB)
+              </p>
               <div className="mt-1 flex items-center space-x-4">
                 <div className="flex-1">
                   <input
