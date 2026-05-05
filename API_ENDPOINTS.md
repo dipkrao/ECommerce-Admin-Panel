@@ -2,6 +2,8 @@
 
 This document outlines the API endpoints required to support the dynamic legal content management system.
 
+**If you get "route not found" when saving Privacy Policy or other legal content**, add the backend routes from the `backend/` folder. See **`backend/README.md`** for step-by-step instructions.
+
 ## Base URL
 
 ```

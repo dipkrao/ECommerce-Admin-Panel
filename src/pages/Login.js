@@ -21,16 +21,16 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    console.log('Login attempt with:', data);
-    
+    console.log("Login attempt with:", data);
+
     try {
       const result = await dispatch(login(data)).unwrap();
-      console.log('Login result:', result);
+      console.log("Login result:", result);
       if (result) {
         navigate("/");
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       setError("root", { message: error || "An unexpected error occurred" });
     } finally {
       setIsLoading(false);

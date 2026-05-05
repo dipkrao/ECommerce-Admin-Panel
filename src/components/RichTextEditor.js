@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   BoldIcon,
   ItalicIcon,
@@ -13,12 +13,43 @@ import {
   UnlinkIcon,
 } from "lucide-react";
 
+// Strip Unicode RTL/LTR control characters that cause reversed text
+const stripBidiControls = (html) => {
+  if (typeof html !== "string") return "";
+  return html.replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "");
+};
+
+// Ensure value is always a string (avoid [object Object] when content is an object)
+const ensureString = (v) => {
+  if (typeof v === "string") return v;
+  if (v != null && typeof v === "object") {
+    if (typeof v.html === "string") return v.html;
+    if (typeof v.text === "string") return v.text;
+    if (typeof v.content === "string") return v.content;
+  }
+  return "";
+};
+
 const RichTextEditor = ({ value, onChange, placeholder, rows = 20 }) => {
+  const editorRef = useRef(null);
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
+  const stringValue = ensureString(value);
+
+  // Force LTR at DOM level so typing is never reversed (e.g. "test" not "tset")
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    el.setAttribute("dir", "ltr");
+    el.setAttribute("lang", "en");
+    el.style.direction = "ltr";
+    el.style.textAlign = "left";
+    el.style.unicodeBidi = "isolate";
+  }, [stringValue]);
 
   const execCommand = (command, value = null) => {
+    editorRef.current?.focus();
     document.execCommand(command, false, value);
-    document.getElementById("rich-text-editor").focus();
+    editorRef.current?.focus();
   };
 
   const insertHTML = (html) => {
@@ -36,8 +67,34 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 20 }) => {
     }
   };
 
+  const notifyChange = (html) => {
+    const str = typeof html === "string" ? stripBidiControls(html) : "";
+    onChange(str);
+  };
+
   const handleInput = (e) => {
-    onChange(e.target.innerHTML);
+    const html = e.target?.innerHTML;
+    notifyChange(html);
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const text = e.clipboardData?.getData("text/plain") ?? "";
+    const plainText = typeof text === "string" ? text : "";
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0 && editorRef.current) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      const fragment = document.createDocumentFragment();
+      const lines = plainText.split(/\r?\n/);
+      lines.forEach((line, i) => {
+        fragment.appendChild(document.createTextNode(line));
+        if (i < lines.length - 1) fragment.appendChild(document.createElement("br"));
+      });
+      range.insertNode(fragment);
+    }
+    const html = editorRef.current?.innerHTML ?? "";
+    notifyChange(html);
   };
 
   const handleKeyDown = (e) => {
@@ -147,21 +204,30 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 20 }) => {
         </div>
       )}
 
-      {/* Rich Text Editor */}
-      <div
-        id="rich-text-editor"
-        contentEditable
-        dangerouslySetInnerHTML={{ __html: value }}
-        onInput={handleInput}
-        onKeyDown={handleKeyDown}
-        className="w-full min-h-[400px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 prose max-w-none"
-        style={{
-          minHeight: `${rows * 1.5}rem`,
-          maxHeight: "600px",
-          overflowY: "auto",
-        }}
-        placeholder={placeholder}
-      />
+      {/* Wrapper forces LTR context so typing is never reversed */}
+      <div dir="ltr" lang="en" style={{ direction: "ltr", unicodeBidi: "isolate" }} className="rounded-md">
+        <div
+          ref={editorRef}
+          id="rich-text-editor"
+          contentEditable
+          dir="ltr"
+          lang="en"
+          dangerouslySetInnerHTML={{ __html: stripBidiControls(stringValue) }}
+          onInput={handleInput}
+          onPaste={handlePaste}
+          onKeyDown={handleKeyDown}
+          className="w-full min-h-[400px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 max-w-none text-left"
+          style={{
+            minHeight: `${rows * 1.5}rem`,
+            maxHeight: "600px",
+            overflowY: "auto",
+            direction: "ltr",
+            textAlign: "left",
+            unicodeBidi: "isolate",
+          }}
+          data-placeholder={placeholder}
+        />
+      </div>
 
       {/* Help Text */}
       <div className="text-sm text-gray-500 space-y-1">

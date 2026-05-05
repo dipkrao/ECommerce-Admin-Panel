@@ -6,7 +6,15 @@ import {
   clearLegalErrors,
 } from "../store/slices/legalSlice";
 import { addNotification } from "../store/slices/uiSlice";
-import { FileText, Shield, Cookie, Check, X, Eye, Building2 } from "lucide-react";
+import {
+  FileText,
+  Shield,
+  Cookie,
+  Check,
+  X,
+  Eye,
+  Building2,
+} from "lucide-react";
 import RichTextEditor from "../components/RichTextEditor";
 import ContentPreview from "../components/ContentPreview";
 
@@ -37,7 +45,7 @@ const LegalContent = () => {
           type: "error",
           title: "Error",
           message: globalError,
-        })
+        }),
       );
       dispatch(clearLegalErrors());
     }
@@ -51,8 +59,9 @@ const LegalContent = () => {
 
   const handleSave = async () => {
     try {
+      const contentToSave = typeof tempContent === "string" ? tempContent : "";
       await dispatch(
-        updateLegalContent({ type: activeTab, content: tempContent })
+        updateLegalContent({ type: activeTab, content: contentToSave }),
       ).unwrap();
 
       dispatch(
@@ -60,7 +69,7 @@ const LegalContent = () => {
           type: "success",
           title: "Success",
           message: `${getTabTitle(activeTab)} updated successfully!`,
-        })
+        }),
       );
 
       setEditing(false);
@@ -74,19 +83,36 @@ const LegalContent = () => {
     setTempContent("");
   };
 
+  // Normalize content to string so we never display/store [object Object]
+  const normalizeContent = (raw) => {
+    if (typeof raw === "string") return raw;
+    if (raw != null && typeof raw === "object") {
+      if (typeof raw.html === "string") return raw.html;
+      if (typeof raw.text === "string") return raw.text;
+      if (typeof raw.content === "string") return raw.content;
+    }
+    return "";
+  };
+
   const getContentByType = (type) => {
+    let raw = "";
     switch (type) {
       case "privacyPolicy":
-        return privacyPolicy.content;
+        raw = privacyPolicy.content;
+        break;
       case "termsOfService":
-        return termsOfService.content;
+        raw = termsOfService.content;
+        break;
       case "cookiePolicy":
-        return cookiePolicy.content;
+        raw = cookiePolicy.content;
+        break;
       case "aboutUs":
-        return aboutUs.content;
+        raw = aboutUs.content;
+        break;
       default:
         return "";
     }
+    return normalizeContent(raw);
   };
 
   const getTabTitle = (type) => {
@@ -112,10 +138,10 @@ const LegalContent = () => {
       type === "privacyPolicy"
         ? privacyPolicy.lastUpdated
         : type === "termsOfService"
-        ? termsOfService.lastUpdated
-        : type === "cookiePolicy"
-        ? cookiePolicy.lastUpdated
-        : aboutUs.lastUpdated;
+          ? termsOfService.lastUpdated
+          : type === "cookiePolicy"
+            ? cookiePolicy.lastUpdated
+            : aboutUs.lastUpdated;
 
     return lastUpdated
       ? new Date(lastUpdated).toLocaleDateString()
@@ -164,8 +190,9 @@ const LegalContent = () => {
           Legal Content Management
         </h1>
         <p className="text-gray-600">
-          Manage your website's legal documents and company information including privacy policy, terms
-          of service, cookie policy, and about us content.
+          Manage your website's legal documents and company information
+          including privacy policy, terms of service, cookie policy, and about
+          us content.
         </p>
       </div>
 
@@ -228,9 +255,9 @@ const LegalContent = () => {
             <div className="space-y-4">
               <RichTextEditor
                 value={tempContent}
-                onChange={setTempContent}
+                onChange={(v) => setTempContent(typeof v === "string" ? v : "")}
                 placeholder={`Enter your ${getTabTitle(
-                  activeTab
+                  activeTab,
                 ).toLowerCase()} content here...`}
                 rows={20}
               />

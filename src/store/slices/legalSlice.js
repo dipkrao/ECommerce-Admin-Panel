@@ -7,13 +7,15 @@ export const fetchLegalContent = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await legalAPI.getAll();
-      return response.data;
+      // Support both { data } wrapper and direct body
+      const data = response.data?.data ?? response.data;
+      return data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch legal content"
+        error.response?.data?.message || "Failed to fetch legal content",
       );
     }
-  }
+  },
 );
 
 export const updateLegalContent = createAsyncThunk(
@@ -21,13 +23,25 @@ export const updateLegalContent = createAsyncThunk(
   async ({ type, content }, { rejectWithValue }) => {
     try {
       const response = await legalAPI.update(type, { content });
-      return response.data;
+      // Support both { data: { content, lastUpdated } } and direct { content, lastUpdated }
+      const data = response.data?.data ?? response.data;
+      const resolvedContent =
+        data?.content ?? data?.data?.content ?? content;
+      const contentStr =
+        typeof resolvedContent === "string"
+          ? resolvedContent
+          : resolvedContent != null
+            ? String(resolvedContent)
+            : "";
+      const lastUpdated =
+        data?.lastUpdated ?? data?.data?.lastUpdated ?? new Date().toISOString();
+      return { content: contentStr, lastUpdated };
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update legal content"
+        error.response?.data?.message || "Failed to update legal content",
       );
     }
-  }
+  },
 );
 
 const initialState = {
@@ -84,10 +98,11 @@ const legalSlice = createSlice({
         state.globalLoading = true;
         state.globalError = null;
       })
-            .addCase(fetchLegalContent.fulfilled, (state, action) => {
+      .addCase(fetchLegalContent.fulfilled, (state, action) => {
         state.globalLoading = false;
-        const { privacyPolicy, termsOfService, cookiePolicy, aboutUs } = action.payload;
-        
+        const { privacyPolicy, termsOfService, cookiePolicy, aboutUs } =
+          action.payload;
+
         if (privacyPolicy) {
           state.privacyPolicy.content = privacyPolicy.content;
           state.privacyPolicy.lastUpdated = privacyPolicy.lastUpdated;
@@ -122,8 +137,9 @@ const legalSlice = createSlice({
         const type = action.meta.arg.type;
         if (state[type]) {
           state[type].isLoading = false;
-          state[type].content = action.payload.content;
-          state[type].lastUpdated = action.payload.lastUpdated;
+          const { content, lastUpdated } = action.payload;
+          if (content !== undefined) state[type].content = typeof content === "string" ? content : String(content ?? "");
+          if (lastUpdated !== undefined) state[type].lastUpdated = lastUpdated;
         }
       })
       .addCase(updateLegalContent.rejected, (state, action) => {
