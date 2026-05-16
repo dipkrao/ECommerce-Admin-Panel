@@ -49,7 +49,7 @@ const Settings = () => {
     const loadSettings = async () => {
       try {
         const res = await settingsAPI.get();
-        const s = res.data || {};
+        const s = res.data?.data ?? res.data ?? {};
         setGeneralSettings((prev) => ({
           ...prev,
           storeName: s.storeName ?? prev.storeName,
@@ -76,7 +76,9 @@ const Settings = () => {
 
     try {
       await settingsAPI.update(generalSettings);
-      toast.success("General settings saved successfully!");
+      toast.success(
+        "General settings saved! The website footer and contact pages will update shortly."
+      );
     } catch (error) {
       const message =
         error.response?.data?.message ||

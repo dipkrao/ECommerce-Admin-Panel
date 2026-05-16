@@ -11,23 +11,11 @@ export const login = createAsyncThunk(
       const response = await authAPI.login(credentials);
       return response.data;
     } catch (error) {
-      // If API fails, fall back to demo mode for testing
-      if (
-        credentials.email === "admin@example.com" &&
-        credentials.password === "admin123"
-      ) {
-        const demoUser = {
-          id: 1,
-          name: "Admin User",
-          email: "admin@example.com",
-          username: "admin",
-          role: "admin",
-          avatar: "https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=AU",
-        };
-        const demoToken = "demo-token-" + Date.now();
-        return { token: demoToken, user: demoUser };
+      if (!error.response) {
+        return rejectWithValue(
+          "Cannot reach the API server. Start the backend (port 5000), then sign in with admin@example.com / admin123."
+        );
       }
-
       return rejectWithValue(error.response?.data?.message || "Login failed");
     }
   }
@@ -40,21 +28,11 @@ export const getProfile = createAsyncThunk(
       const state = getState();
       const token = state.auth.token;
 
-      if (token && !token.startsWith("demo-token-")) {
-        const response = await authAPI.getProfile();
-        return response.data;
-      } else if (token && token.startsWith("demo-token-")) {
-        // Demo mode fallback
-        return {
-          id: 1,
-          name: "Admin User",
-          email: "admin@example.com",
-          username: "admin",
-          role: "admin",
-          avatar: "https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=AU",
-        };
+      if (!token || token.startsWith("demo-token-")) {
+        throw new Error("Not authenticated");
       }
-      throw new Error("No token available");
+      const response = await authAPI.getProfile();
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to get profile");
     }
@@ -68,14 +46,11 @@ export const updateProfile = createAsyncThunk(
       const state = getState();
       const token = state.auth.token;
 
-      if (token && !token.startsWith("demo-token-")) {
-        const response = await authAPI.updateProfile(profileData);
-        return response.data.user;
-      } else {
-        // Demo mode fallback
-        const currentUser = state.auth.user;
-        return { ...currentUser, ...profileData };
+      if (!token || token.startsWith("demo-token-")) {
+        throw new Error("Not authenticated");
       }
+      const response = await authAPI.updateProfile(profileData);
+      return response.data.user;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Profile update failed"
@@ -91,29 +66,51 @@ export const changePassword = createAsyncThunk(
       const state = getState();
       const token = state.auth.token;
 
-      if (token && !token.startsWith("demo-token-")) {
-        await authAPI.changePassword(passwordData);
-        return true;
-      } else {
-        // Demo mode fallback
-        if (passwordData.currentPassword === "admin123") {
-          return true;
-        } else {
-          throw new Error("Current password is incorrect");
-        }
+      if (!token || token.startsWith("demo-token-")) {
+        throw new Error("Not authenticated");
       }
+      await authAPI.changePassword(passwordData);
+      return true;
     } catch (error) {
       return rejectWithValue(error.message || "Password change failed");
     }
   }
 );
 
+const getStoredUser = () => {
+  try {
+    const stored = localStorage.getItem("adminUser");
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+const normalizeAuthPayload = (payload) => {
+  if (!payload) return { token: null, user: null };
+  const token = payload.token ?? payload.accessToken ?? null;
+  const user = payload.user ?? payload.admin ?? payload.data?.user ?? null;
+  return { token, user };
+};
+
+const getStoredToken = () => {
+  const token = localStorage.getItem("adminToken");
+  if (!token || token.startsWith("demo-token-")) {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+    return null;
+  }
+  return token;
+};
+
+const storedToken = getStoredToken();
+
 const initialState = {
-  user: null,
-  token: localStorage.getItem("adminToken"),
+  user: storedToken ? getStoredUser() : null,
+  token: storedToken,
   loading: false,
   error: null,
-  isAuthenticated: !!localStorage.getItem("adminToken"),
+  isAuthenticated: !!storedToken,
 };
 
 const authSlice = createSlice({
@@ -126,7 +123,16 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
       toast.success("Logged out successfully");
+    },
+    clearSession: (state) => {
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.error = null;
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
     },
     clearError: (state) => {
       state.error = null;
@@ -143,17 +149,20 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+        const { token, user } = normalizeAuthPayload(action.payload);
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAuthenticated = true;
-        localStorage.setItem("adminToken", action.payload.token);
+        state.user = user;
+        state.token = token;
+        state.isAuthenticated = !!token;
 
-        if (action.payload.token.startsWith("demo-token-")) {
-          toast.success("Login successful! (Demo mode)");
-        } else {
-          toast.success("Login successful!");
+        if (token) {
+          localStorage.setItem("adminToken", token);
         }
+        if (user) {
+          localStorage.setItem("adminUser", JSON.stringify(user));
+        }
+
+        toast.success("Login successful!");
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -169,25 +178,22 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        if (action.payload) {
+          localStorage.setItem("adminUser", JSON.stringify(action.payload));
+        }
       })
       .addCase(getProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        if (state.token) {
-          state.token = null;
-          state.isAuthenticated = false;
-          localStorage.removeItem("adminToken");
-        }
       })
 
       // Update Profile
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.user = action.payload;
-        if (state.token && !state.token.startsWith("demo-token-")) {
-          toast.success("Profile updated successfully!");
-        } else {
-          toast.success("Profile updated successfully! (Demo mode)");
+        if (action.payload) {
+          localStorage.setItem("adminUser", JSON.stringify(action.payload));
         }
+        toast.success("Profile updated successfully!");
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.error = action.payload;
@@ -195,12 +201,8 @@ const authSlice = createSlice({
       })
 
       // Change Password
-      .addCase(changePassword.fulfilled, (state) => {
-        if (state.token && !state.token.startsWith("demo-token-")) {
-          toast.success("Password changed successfully!");
-        } else {
-          toast.success("Password changed successfully! (Demo mode)");
-        }
+      .addCase(changePassword.fulfilled, () => {
+        toast.success("Password changed successfully!");
       })
       .addCase(changePassword.rejected, (state, action) => {
         state.error = action.payload;
@@ -209,5 +211,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setDemoMode } = authSlice.actions;
+export const { logout, clearSession, clearError, setDemoMode } =
+  authSlice.actions;
 export default authSlice.reducer;

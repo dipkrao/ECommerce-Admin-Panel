@@ -39,16 +39,23 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch all data in parallel
-      const [productsResponse, ordersResponse, usersResponse] = await Promise.all([
-        productAPI.getAll({ limit: 1000 }),
-        orderAPI.getAll({ limit: 1000 }),
-        userAPI.getAll()
-      ]);
+      const token = localStorage.getItem('adminToken');
+      const isDemoSession = token?.startsWith('demo-token-');
 
+      const productsResponse = await productAPI.getAll({ limit: 1000 });
       const allProducts = productsResponse.data.products || productsResponse.data || [];
-      const allOrders = ordersResponse.data.orders || ordersResponse.data || [];
-      const allUsers = usersResponse.data.users || usersResponse.data || [];
+
+      let allOrders = [];
+      let allUsers = [];
+
+      if (!isDemoSession) {
+        const [ordersResponse, usersResponse] = await Promise.all([
+          orderAPI.getAll({ limit: 1000 }),
+          userAPI.getAll(),
+        ]);
+        allOrders = ordersResponse.data.orders || ordersResponse.data || [];
+        allUsers = usersResponse.data.users || usersResponse.data || [];
+      }
 
       // Calculate product statistics
       const totalProducts = allProducts.length;

@@ -10,7 +10,10 @@ import {
   Link as LinkIcon,
   GripVertical,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { bannerAPI } from "../utils/api";
+
+const MAX_BANNER_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const Banners = () => {
   const [banners, setBanners] = useState([]);
@@ -57,14 +60,28 @@ const Banners = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (JPG, PNG, GIF, or WebP).");
+      e.target.value = "";
+      return;
     }
+
+    if (file.size > MAX_BANNER_IMAGE_BYTES) {
+      toast.error("Banner image must be 2 MB or smaller.");
+      e.target.value = "";
+      setImageFile(null);
+      setImagePreview(null);
+      return;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const resetForm = () => {
@@ -88,49 +105,45 @@ const Banners = () => {
 
     // Validate that image is selected for new banners
     if (!editingBanner && !imageFile) {
-      alert("Please select an image for the banner.");
+      toast.error("Please select an image for the banner.");
+      return;
+    }
+
+    if (imageFile && imageFile.size > MAX_BANNER_IMAGE_BYTES) {
+      toast.error("Banner image must be 2 MB or smaller.");
       return;
     }
 
     try {
-      console.log("Creating banner with data:", formData);
-      console.log("Image file:", imageFile);
-      
       const formDataToSend = new FormData();
       Object.keys(formData).forEach((key) => {
         if (formData[key] !== "") {
           formDataToSend.append(key, formData[key]);
-          console.log(`Appending ${key}:`, formData[key]);
         }
       });
 
       if (imageFile) {
         formDataToSend.append("image", imageFile);
-        console.log("Appending image file:", imageFile.name, imageFile.type, imageFile.size);
-      }
-
-      console.log("FormData entries:");
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(`${key}:`, value);
       }
 
       if (editingBanner) {
-        console.log("Updating banner:", editingBanner._id);
         await bannerAPI.update(editingBanner._id, formDataToSend);
+        toast.success("Banner updated successfully!");
       } else {
-        console.log("Creating new banner");
         await bannerAPI.create(formDataToSend);
+        toast.success("Banner created successfully!");
       }
 
-      console.log("Banner saved successfully!");
       fetchBanners();
       setShowForm(false);
       resetForm();
     } catch (error) {
       console.error("Error saving banner:", error);
-      console.error("Error response:", error.response);
-      const errorMessage = error.response?.data?.message || error.message || "Error saving banner. Please try again.";
-      alert(errorMessage);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error saving banner. Please try again.";
+      toast.error(errorMessage);
     }
   };
 
@@ -377,7 +390,7 @@ const Banners = () => {
                 Banner Image *
               </label>
               <p className="mt-1 text-xs text-gray-500">
-                Recommended size: <span className="font-semibold">1920 x 600 px</span> (JPG or PNG, under 1 MB)
+                Recommended size: <span className="font-semibold">1920 x 600 px</span> (JPG, PNG, GIF, or WebP — max 2 MB)
               </p>
               <div className="mt-1 flex items-center space-x-4">
                 <div className="flex-1">

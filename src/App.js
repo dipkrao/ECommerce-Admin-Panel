@@ -9,7 +9,7 @@ import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
 import { store } from "./store";
 import { useAppSelector, useAppDispatch } from "./store/hooks";
-import { getProfile } from "./store/slices/authSlice";
+import { getProfile, clearSession } from "./store/slices/authSlice";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
@@ -26,15 +26,24 @@ function App() {
   // Protected Route Component - moved inside App function
   const ProtectedRoute = ({ children }) => {
     const dispatch = useAppDispatch();
-    const { user, loading, token } = useAppSelector((state) => state.auth);
+    const { user, loading, token, isAuthenticated } = useAppSelector(
+      (state) => state.auth
+    );
 
     useEffect(() => {
-      if (token && !user) {
+      const onSessionExpired = () => dispatch(clearSession());
+      window.addEventListener("admin:session-expired", onSessionExpired);
+      return () =>
+        window.removeEventListener("admin:session-expired", onSessionExpired);
+    }, [dispatch]);
+
+    useEffect(() => {
+      if (token && !user && !token.startsWith("demo-token-")) {
         dispatch(getProfile());
       }
     }, [dispatch, token, user]);
 
-    if (loading) {
+    if (loading && token && !user) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="spinner"></div>
@@ -42,7 +51,7 @@ function App() {
       );
     }
 
-    if (!user) {
+    if (!isAuthenticated || !token || !user) {
       return <Navigate to="/login" replace />;
     }
 

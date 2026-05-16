@@ -15,55 +15,72 @@ const api = axios.create({
   },
 });
 
+const getStoredToken = () => {
+  const token = localStorage.getItem("adminToken");
+  if (!token || token.startsWith("demo-token-")) return null;
+  return token;
+};
+
+const applyAuthHeaders = (config) => {
+  const token = getStoredToken();
+  if (!token) return config;
+
+  if (typeof config.headers?.set === "function") {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  } else {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  // Let the browser set multipart boundary for file uploads
+  if (config.data instanceof FormData) {
+    if (typeof config.headers.delete === "function") {
+      config.headers.delete("Content-Type");
+    } else if (config.headers) {
+      delete config.headers["Content-Type"];
+    }
+  }
+
+  return config;
+};
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
-  (config) => {
-    console.log("API Request:", config.method?.toUpperCase(), config.url);
-    console.log("Request data:", config.data);
-    console.log("Request headers:", config.headers);
-
-    const token = localStorage.getItem("adminToken");
-    if (token && !token.startsWith("demo-token-")) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log("Using real token:", token.substring(0, 20) + "...");
-    } else {
-      console.log("Using demo token or no token:", token);
-    }
-
-    // Remove Content-Type header for FormData to allow browser to set it with boundary
-    if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"];
-      console.log("Removed Content-Type header for FormData");
-    }
-
-    return config;
-  },
-  (error) => {
-    console.error("Request interceptor error:", error);
-    return Promise.reject(error);
-  }
+  (config) => applyAuthHeaders(config),
+  (error) => Promise.reject(error)
 );
+
+const multipartAuthConfig = () => {
+  const token = getStoredToken();
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+};
+
+const isLoginRequest = (config) => {
+  const url = config?.url || "";
+  return url.includes("/auth/admin/login") || url.includes("/auth/login");
+};
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => {
-    console.log("API Response:", response.status, response.config.url);
-    console.log("Response data:", response.data);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error("API Error:", error.response?.status, error.config?.url);
-    console.error(
-      "Error message:",
-      error.response?.data?.message || error.message
-    );
-    console.error("Full error:", error);
+    const status = error.response?.status;
+    const config = error.config;
 
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem("adminToken");
-      window.location.href = "/login";
+    if (status === 401 && !isLoginRequest(config)) {
+      const token = localStorage.getItem("adminToken");
+      // Demo sessions are client-only; don't tear down auth on API 401s
+      if (token && !token.startsWith("demo-token-")) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("admin:session-expired"));
+        }
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -115,11 +132,12 @@ export const userAPI = {
 export const bannerAPI = {
   getAll: () => api.get("/banners"),
   getById: (id) => api.get(`/banners/${id}`),
-  create: (data) => api.post("/banners", data),
-  update: (id, data) => api.put(`/banners/${id}`, data),
+  create: (data) => api.post("/banners", data, multipartAuthConfig()),
+  update: (id, data) => api.put(`/banners/${id}`, data, multipartAuthConfig()),
   delete: (id) => api.delete(`/banners/${id}`),
   toggleStatus: (id) => api.patch(`/banners/${id}/toggle`),
-  reorder: (bannerOrders) => api.post("/banners/reorder", { bannerOrders }),
+  reorder: (bannerOrders) =>
+    api.post("/banners/reorder", { bannerOrders }),
 };
 
 export const legalAPI = {
